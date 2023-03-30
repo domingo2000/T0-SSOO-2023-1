@@ -1,0 +1,1 @@
+./fifoss example.txt out.txt

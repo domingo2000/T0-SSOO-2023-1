@@ -1,0 +1,7 @@
+6
+PROCESS1 1 10 5 /bin/ls 0
+PROCESS2 2 5 12 /bin/touch 1 archivo.txt
+PROCESS3 5 5 12 /bin/cp 2 original.txt dest.txt
+PROCESS4 1 5 12 /bin/touch 1 archivo.txt
+PROCESS5 2 5 12 /bin/touch 1 archivo.txt
+PROCESS6 1 5 12 /bin/touch 1 archivo.txt
