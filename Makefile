@@ -45,7 +45,7 @@ LIB=$(MTH)
 ###############################################################################
 
 # Directorios con elementos de uso común
-COMMON=file_manager process queue
+COMMON=file_manager process queue time
 
 # Directorios que serán compilados a un programa
 PROGRAMS=fifoss

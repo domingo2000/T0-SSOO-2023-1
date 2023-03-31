@@ -1,6 +1,14 @@
 #pragma once
-#include "../process/process.h"
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <stdbool.h>
+#include <wait.h>
+#include <time.h>
+
+#include "../time/_time.h"
+#include "../process/process.h"
 
 typedef struct node
 {
@@ -22,8 +30,8 @@ typedef struct queue
     /* data */
 } Queue;
 
-Node *node_init(Process *process);
-void node_destroy(Node *node);
+Node *_node_init(Process *process);
+void _node_destroy(Node *node);
 
 Queue *queue_init();
 void queue_destroy(Queue *queue);
@@ -33,9 +41,8 @@ void queue_append_right(Queue *queue, Process *process);
 Process *queue_pop_left(Queue *queue);
 Process *queue_pop_right(Queue *queue);
 Process *queue_pop_ready(Queue *queue);
-Queue *merge_queues(Queue *queue_a, Queue *queue_b);
+Queue *_merge_queues(Queue *queue_a, Queue *queue_b);
 
-void enque(Queue *queue, Process *process);
 void check_ready_processes(Queue *queue);
 void check_running_process(Queue *queue);
 void check_waiting_processes(Queue *queue);

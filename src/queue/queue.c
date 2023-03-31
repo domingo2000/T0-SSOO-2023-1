@@ -1,13 +1,6 @@
 #include "queue.h"
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <wait.h>
 
-Node *node_init(Process *process)
+Node *_node_init(Process *process)
 {
     Node *node = malloc(sizeof(Node));
     node->data = process;
@@ -16,7 +9,7 @@ Node *node_init(Process *process)
     return node;
 }
 
-void node_destroy(Node *node)
+void _node_destroy(Node *node)
 {
     free(node);
 }
@@ -25,7 +18,6 @@ Queue *queue_init()
 {
     Queue *queue = malloc(sizeof(Queue));
     queue->running_process = NULL;
-    queue->current_running_time = -1;
     queue->current_start_time = -1;
     queue->size = 0;
     queue->head = NULL;
@@ -40,7 +32,7 @@ void queue_destroy(Queue *queue)
     while (queue->tail)
     {
         last = queue->tail->next;
-        node_destroy(queue->tail);
+        _node_destroy(queue->tail);
         queue->tail = last;
     }
     free(queue);
@@ -48,7 +40,7 @@ void queue_destroy(Queue *queue)
 
 void queue_append_left(Queue *queue, Process *process)
 {
-    Node *node = node_init(process);
+    Node *node = _node_init(process);
     if (queue->size == 0)
     {
         queue->tail = node;
@@ -66,7 +58,7 @@ void queue_append_left(Queue *queue, Process *process)
 
 void queue_append_right(Queue *queue, Process *process)
 {
-    Node *node = node_init(process);
+    Node *node = _node_init(process);
     if (queue->size == 0)
     {
         queue->tail = node;
@@ -97,7 +89,7 @@ Process *queue_pop_left(Queue *queue)
         first->prev = NULL;
     }
     queue->tail = first;
-    node_destroy(node);
+    _node_destroy(node);
     queue->size -= 1;
     return process;
 }
@@ -117,30 +109,57 @@ Process *queue_pop_right(Queue *queue)
         last->next = NULL;
     }
     queue->head = last;
-    node_destroy(node);
+    _node_destroy(node);
     queue->size -= 1;
     return process;
 }
 
 Process *queue_pop_ready(Queue *queue)
 {
-    Queue *stack = queue_init();
-    Process *process = queue_pop_right(queue);
 
-    while (process)
+    if (queue->size == 0)
     {
-        if (process->state == ready)
-        {
-            break;
-        }
-        else
-        {
-            queue_append_right(stack, process);
-            process = queue_pop_right(queue);
-        }
+        return NULL;
     }
 
-    queue = merge_queues(queue, stack);
+    Node *node = queue->tail;
+    Process *process;
+    for (int i = 0; i < queue->size; i++)
+    {
+        process = node->data;
+        if (process->state == ready)
+        {
+            // Update the queue state
+            if (queue->tail == node)
+            {
+                queue->tail = node->next;
+            }
+            if (queue->head == node)
+            {
+                queue->head = node->prev;
+            }
+            if (node->next)
+            {
+                node->next->prev = node->prev;
+            }
+            if (node->prev)
+            {
+                node->prev->next = node->next;
+            }
+            queue->size -= 1;
+            break;
+        }
+        node = node->next;
+    }
+
+    // if (queue->size == 1)
+    // {
+    //     printf("  ");
+    // }
+    // if (queue->size == 2)
+    // {
+    //     printf("  ");
+    // }
     return process;
 }
 
@@ -148,7 +167,7 @@ Process *queue_pop_ready(Queue *queue)
  * Merge two queues and delete the second queue
  * returns: queue_a updated with elements of queue_b
  */
-Queue *merge_queues(Queue *queue_a, Queue *queue_b)
+Queue *_merge_queues(Queue *queue_a, Queue *queue_b)
 {
     // Extend empty list does not change the state
     if (queue_b->size == 0)
@@ -176,60 +195,24 @@ Queue *merge_queues(Queue *queue_a, Queue *queue_b)
 
 int queue_get_current_running_time(Queue *queue)
 {
-    queue->current_running_time = (clock() / CLOCKS_PER_SEC) - queue->current_start_time;
-    int time_passed = (int)queue->current_running_time;
-    return time_passed;
-}
-
-void enque(Queue *queue, Process *process)
-{
-    printf("ENQUEUEING | %s\n", process->name);
-    queue_append_left(queue, process);
-}
-
-int queue_create_process(Queue *queue, Process *process)
-{
-    printf("FORKING | %s | parent pid: %d\n", process->name, getpid());
-    int pid = fork();
-    if (pid != 0)
-    {
-        process->pid = pid;
-        process->created = true;
-        return pid;
-    }
-    else
-    {
-        // TO DO: child process code
-        sleep(60);
-        exit(0);
-        return 0;
-    }
+    double current_running_time = get_time_interval(queue->current_start_time, get_timestamp());
+    return current_running_time;
 }
 
 Process *queue_cpu_run(Queue *queue, Process *process)
 {
     printf("LOADING TO CPU | %s\n", process->name);
-    process->state = running;
+    process_set_state(process, running);
     queue->running_process = process;
-    queue->current_start_time = clock() / CLOCKS_PER_SEC;
-    queue->current_running_time = 0;
-
-    if (!process->created)
-    {
-        int pid = queue_create_process(queue, process);
-        process->pid = pid;
-    }
-    else
-    {
-        // Send continue signal
-    }
+    queue->current_start_time = get_timestamp();
     return process;
 }
 
 void queue_send_process_to_wait(Queue *queue, Process *process)
 {
     printf("STOPPING | %s \n", process->name);
-    process->state = waiting;
+
+    process_set_state(process, waiting);
 }
 
 void check_ready_processes(Queue *queue)
@@ -249,8 +232,14 @@ void check_running_process(Queue *queue)
     int wstatus;
     if (queue->running_process)
     {
-        waitpid(queue->running_process->pid, &wstatus, WNOHANG);
+        // If the process send us the exit signal we listen that
+        int child_pid = waitpid(queue->running_process->pid, &wstatus, WNOHANG);
+        if (child_pid)
+        {
+            printf("CHILD EXITED | pid=%d\n", child_pid);
+        }
 
+        // If the process is running more time than necesary we send it to wait
         if (queue_get_current_running_time(queue) >= queue->running_process->cpu_burst)
         {
             queue_send_process_to_wait(queue, queue->running_process);
@@ -261,23 +250,33 @@ void check_running_process(Queue *queue)
 
 void check_waiting_processes(Queue *queue)
 {
+    Node *node = queue->tail;
+
+    while (node)
+    {
+        Process *process = node->data;
+
+        if (process->state == waiting && process_get_wait_time(process) >= process->io_wait)
+        {
+            process_set_state(process, ready);
+        }
+        node = node->next;
+    }
 }
 
 void check_enter_processes(Queue *queue, int time_start, Process **processes, int n_processes)
 {
-    double time_now = clock();
-    int current_time = (int)((time_start - time_now) / CLOCKS_PER_SEC);
+    int current_time = round_time(get_time_interval(time_start, get_timestamp()));
     for (int i = 0; i < n_processes; i++)
     {
         Process *process = processes[i];
         if (current_time == process->start_time && process->state == none)
         {
             printf("STARTING | %s | time: %d\n ", process->name, current_time);
-            process->state = ready;
-            enque(queue, process);
-        };
+            process_set_state(process, ready);
 
-        time_now = clock();
-        current_time = (int)((time_now - time_start) / CLOCKS_PER_SEC);
+            printf("ENQUEUEING | %s\n", process->name);
+            queue_append_left(queue, process);
+        };
     }
 }

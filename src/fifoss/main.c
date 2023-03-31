@@ -49,7 +49,7 @@ Process **load_processes(InputFile *input_file, int n_processes)
 		int start_time = atoi(input_file->lines[i][1]);
 		int cpu_burst = atoi(input_file->lines[i][2]);
 		int io_wait = atoi(input_file->lines[i][3]);
-		int path = atoi(input_file->lines[i][4]);
+		// int path = atoi(input_file->lines[i][4]);
 		int n_args = atoi(input_file->lines[i][5]);
 		char *args[n_args];
 
@@ -87,14 +87,15 @@ int main(int argc, char const *argv[])
 		process_print(processes[i]);
 	}
 
-	double time_start = clock() / CLOCKS_PER_SEC;
+	double time_start = get_timestamp();
 
 	Queue *queue = queue_init();
 
 	Process *last_process = processes[n_processes - 1];
-	while (last_process->state != finished) // TO DO: Change to finished
+	while (last_process->state != finished)
 	{
 		check_enter_processes(queue, time_start, processes, n_processes);
+		check_waiting_processes(queue);
 		check_running_process(queue);
 		check_ready_processes(queue);
 	}

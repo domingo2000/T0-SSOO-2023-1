@@ -1,5 +1,6 @@
 #pragma once
 #include <stdbool.h>
+#include "../time/_time.h"
 
 enum state
 {
@@ -18,6 +19,7 @@ typedef struct Process
 	enum state state;
 	bool created;
 	int start_time;
+	double wait_time;
 	int cpu_burst;
 	int io_wait;
 	int n_args;
@@ -37,3 +39,7 @@ Process *process_init(
 void process_destroy(Process *process);
 
 void process_print(Process *process);
+
+void process_set_state(Process *process, enum state state);
+
+double process_get_wait_time(Process *process);
