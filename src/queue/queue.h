@@ -1,5 +1,6 @@
 #pragma once
 #include "../process/process.h"
+#include <stdbool.h>
 
 typedef struct node
 {
@@ -10,6 +11,11 @@ typedef struct node
 
 typedef struct queue
 {
+    bool cpu_bussy;
+    Process *running_process;
+    int running_pid;
+    double current_start_time;
+    double current_running_time;
     int size;
     Node *head;
     Node *tail;
@@ -26,12 +32,14 @@ void queue_append_left(Queue *queue, Process *process);
 void queue_append_right(Queue *queue, Process *process);
 Process *queue_pop_left(Queue *queue);
 Process *queue_pop_right(Queue *queue);
+Process *queue_pop_ready(Queue *queue);
+Queue *merge_queues(Queue *queue_a, Queue *queue_b);
 
 void enque(Queue *queue, Process *process);
 void check_ready_processes(Queue *queue);
 void check_running_process(Queue *queue);
 void check_waiting_processes(Queue *queue);
-void check_enter_processes(Queue *queue, int time_start, Process **processes);
+void check_enter_processes(Queue *queue, int time_start, Process **processes, int n_processes);
 
 /**
  * Flujo

@@ -3,6 +3,7 @@
 #include <wait.h>
 #include <unistd.h>
 #include <time.h>
+#include <stdbool.h>
 
 #include "../process/process.h"
 #include "../queue/queue.h"
@@ -64,7 +65,7 @@ Process **load_processes(InputFile *input_file, int n_processes)
 	return processes;
 }
 
-int main2(int argc, char const *argv[])
+int main(int argc, char const *argv[])
 {
 	/*Lectura del input*/
 	char *file_name = (char *)argv[1];
@@ -86,34 +87,43 @@ int main2(int argc, char const *argv[])
 		process_print(processes[i]);
 	}
 
-	double time_start = clock();
+	double time_start = clock() / CLOCKS_PER_SEC;
 
-	Queue queue;
-	check_enter_processes(queue, time_start, processes);
+	Queue *queue = queue_init();
+
+	Process *last_process = processes[n_processes - 1];
+	while (last_process->state != finished) // TO DO: Change to finished
+	{
+		check_enter_processes(queue, time_start, processes, n_processes);
+		check_running_process(queue);
+		check_ready_processes(queue);
+	}
 
 	// Print all the processes in the array
 	for (int i = 0; i < input_file->len; i++)
 	{
 		process_destroy(processes[i]);
 	}
+	queue_destroy(queue);
 	free(processes);
 	input_file_destroy(input_file);
 
 	return 0;
 }
 
-int main()
+int main2()
 {
 	char *args[2] = {"1", "2"};
-	Process *process0 = process_init(0, "P0", none, 0, 10, 10, 1, args);
-	Process *process1 = process_init(1, "P1", none, 0, 10, 10, 1, args);
-	Process *process2 = process_init(2, "P2", none, 0, 10, 10, 1, args);
+	Process *process0 = process_init(0, "P0", waiting, 0, 10, 10, 1, args);
+	Process *process1 = process_init(1, "P1", ready, 0, 10, 10, 1, args);
+	Process *process2 = process_init(2, "P2", waiting, 0, 10, 10, 1, args);
 
 	Queue *queue = queue_init();
 	queue_append_right(queue, process0);
 	queue_append_right(queue, process1);
-	queue_append_left(queue, process2);
+	queue_append_right(queue, process2);
 
+	process_print(queue_pop_ready(queue));
 	// process_print(queue_pop_left(queue));
 	// process_print(queue_pop_right(queue));
 	// process_print(queue_pop_right(queue));

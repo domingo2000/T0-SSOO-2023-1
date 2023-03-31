@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "process.h"
+#include <stdbool.h>
 
 Process *process_init(
 	int _id,
@@ -17,6 +18,7 @@ Process *process_init(
 	process->name = name;
 	process->pid = -1;
 	process->state = state;
+	process->created = false;
 	process->start_time = start_time;
 	process->cpu_burst = cpu_burst;
 	process->io_wait = io_wait;

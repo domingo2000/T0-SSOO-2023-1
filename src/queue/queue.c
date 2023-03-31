@@ -2,6 +2,10 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <wait.h>
 
 Node *node_init(Process *process)
 {
@@ -20,6 +24,9 @@ void node_destroy(Node *node)
 Queue *queue_init()
 {
     Queue *queue = malloc(sizeof(Queue));
+    queue->running_process = NULL;
+    queue->current_running_time = -1;
+    queue->current_start_time = -1;
     queue->size = 0;
     queue->head = NULL;
     queue->tail = NULL;
@@ -77,6 +84,11 @@ void queue_append_right(Queue *queue, Process *process)
 
 Process *queue_pop_left(Queue *queue)
 {
+    if (queue->size == 0)
+    {
+        return NULL;
+    }
+
     Node *node = queue->tail;
     Process *process = node->data;
     Node *first = node->next;
@@ -92,6 +104,11 @@ Process *queue_pop_left(Queue *queue)
 
 Process *queue_pop_right(Queue *queue)
 {
+    if (queue->size == 0)
+    {
+        return NULL;
+    }
+
     Node *node = queue->head;
     Process *process = node->data;
     Node *last = node->prev;
@@ -105,31 +122,159 @@ Process *queue_pop_right(Queue *queue)
     return process;
 }
 
+Process *queue_pop_ready(Queue *queue)
+{
+    Queue *stack = queue_init();
+    Process *process = queue_pop_right(queue);
+
+    while (process)
+    {
+        if (process->state == ready)
+        {
+            break;
+        }
+        else
+        {
+            queue_append_right(stack, process);
+            process = queue_pop_right(queue);
+        }
+    }
+
+    queue = merge_queues(queue, stack);
+    return process;
+}
+
+/**
+ * Merge two queues and delete the second queue
+ * returns: queue_a updated with elements of queue_b
+ */
+Queue *merge_queues(Queue *queue_a, Queue *queue_b)
+{
+    // Extend empty list does not change the state
+    if (queue_b->size == 0)
+    {
+        return queue_a;
+    }
+
+    // If the queue_a is empty replace head and tail is enough
+    if (queue_a->size == 0)
+    {
+        queue_a->tail = queue_b->tail;
+        queue_a->head = queue_b->head;
+        return queue_a;
+    }
+
+    // In other case I have nodes in queue_a and queue_b
+    // Need to update the node linikns
+    queue_a->head->next = queue_b->tail;
+    queue_b->tail->prev = queue_a->head;
+    // and the queue_a head
+    queue_a->head = queue_b->head;
+    free(queue_b);
+    return queue_a;
+}
+
+int queue_get_current_running_time(Queue *queue)
+{
+    queue->current_running_time = (clock() / CLOCKS_PER_SEC) - queue->current_start_time;
+    int time_passed = (int)queue->current_running_time;
+    return time_passed;
+}
+
 void enque(Queue *queue, Process *process)
 {
+    printf("ENQUEUEING | %s\n", process->name);
+    queue_append_left(queue, process);
+}
+
+int queue_create_process(Queue *queue, Process *process)
+{
+    printf("FORKING | %s | parent pid: %d\n", process->name, getpid());
+    int pid = fork();
+    if (pid != 0)
+    {
+        process->pid = pid;
+        process->created = true;
+        return pid;
+    }
+    else
+    {
+        // TO DO: child process code
+        sleep(60);
+        exit(0);
+        return 0;
+    }
+}
+
+Process *queue_cpu_run(Queue *queue, Process *process)
+{
+    printf("LOADING TO CPU | %s\n", process->name);
+    process->state = running;
+    queue->running_process = process;
+    queue->current_start_time = clock() / CLOCKS_PER_SEC;
+    queue->current_running_time = 0;
+
+    if (!process->created)
+    {
+        int pid = queue_create_process(queue, process);
+        process->pid = pid;
+    }
+    else
+    {
+        // Send continue signal
+    }
+    return process;
+}
+
+void queue_send_process_to_wait(Queue *queue, Process *process)
+{
+    printf("STOPPING | %s \n", process->name);
+    process->state = waiting;
 }
 
 void check_ready_processes(Queue *queue)
 {
+    if (!queue->running_process)
+    {
+        Process *process = queue_pop_ready(queue);
+        if (process != NULL)
+        {
+            queue_cpu_run(queue, process);
+        }
+    }
+}
+
+void check_running_process(Queue *queue)
+{
+    int wstatus;
+    if (queue->running_process)
+    {
+        waitpid(queue->running_process->pid, &wstatus, WNOHANG);
+
+        if (queue_get_current_running_time(queue) >= queue->running_process->cpu_burst)
+        {
+            queue_send_process_to_wait(queue, queue->running_process);
+            queue->running_process = NULL;
+        }
+    }
 }
 
 void check_waiting_processes(Queue *queue)
 {
 }
 
-void check_enter_processes(Queue *queue, int time_start, Process **processes)
+void check_enter_processes(Queue *queue, int time_start, Process **processes, int n_processes)
 {
     double time_now = clock();
     int current_time = (int)((time_start - time_now) / CLOCKS_PER_SEC);
-    int process_counter = 0;
-    while (current_time < 5)
+    for (int i = 0; i < n_processes; i++)
     {
-        Process *process = processes[process_counter];
+        Process *process = processes[i];
         if (current_time == process->start_time && process->state == none)
         {
-            printf("Starting process %s at time %d\n ", process->name, current_time);
+            printf("STARTING | %s | time: %d\n ", process->name, current_time);
             process->state = ready;
-            process_counter += 1;
+            enque(queue, process);
         };
 
         time_now = clock();

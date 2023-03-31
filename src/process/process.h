@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 
 enum state
 {
@@ -15,6 +16,7 @@ typedef struct Process
 	char *name;
 	int pid;
 	enum state state;
+	bool created;
 	int start_time;
 	int cpu_burst;
 	int io_wait;
