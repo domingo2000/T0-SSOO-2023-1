@@ -91,6 +91,13 @@ Process *queue_pop_left(Queue *queue)
     queue->tail = first;
     _node_destroy(node);
     queue->size -= 1;
+
+    // Special case if the queue gets empty
+    if (queue->size == 0)
+    {
+        queue->tail = NULL;
+        queue->head = NULL;
+    }
     return process;
 }
 
@@ -111,6 +118,13 @@ Process *queue_pop_right(Queue *queue)
     queue->head = last;
     _node_destroy(node);
     queue->size -= 1;
+
+    // Special case if the queue gets empty
+    if (queue->size == 0)
+    {
+        queue->tail = NULL;
+        queue->head = NULL;
+    }
     return process;
 }
 
@@ -122,44 +136,32 @@ Process *queue_pop_ready(Queue *queue)
         return NULL;
     }
 
-    Node *node = queue->tail;
+    Process *popped_processes[queue->size];
+
+    int count = 0;
     Process *process;
-    for (int i = 0; i < queue->size; i++)
+    while (count < queue->size)
     {
-        process = node->data;
+        process = queue_pop_right(queue);
         if (process->state == ready)
         {
-            // Update the queue state
-            if (queue->tail == node)
-            {
-                queue->tail = node->next;
-            }
-            if (queue->head == node)
-            {
-                queue->head = node->prev;
-            }
-            if (node->next)
-            {
-                node->next->prev = node->prev;
-            }
-            if (node->prev)
-            {
-                node->prev->next = node->next;
-            }
-            queue->size -= 1;
             break;
         }
-        node = node->next;
+        else
+        {
+            // Temporaly store popped process not ready
+            popped_processes[count] = process;
+        }
+        count += 1;
     }
 
-    // if (queue->size == 1)
-    // {
-    //     printf("  ");
-    // }
-    // if (queue->size == 2)
-    // {
-    //     printf("  ");
-    // }
+    // We return to the queue all the process popped that where not ready back
+    while (count > 0)
+    {
+        queue_append_right(queue, popped_processes[count - 1]);
+        count -= 1;
+    }
+
     return process;
 }
 
@@ -274,10 +276,8 @@ void check_enter_processes(Queue *queue, int time_start, Process **processes, in
         Process *process = processes[i];
         if (current_time == process->start_time && process->state == none)
         {
-            printf("STARTING | %s | time: %d\n ", process->name, current_time);
+            printf("STARTING | %s | time: %d\n", process->name, current_time);
             process_set_state(process, ready);
-
-            printf("ENQUEUEING | %s\n", process->name);
             queue_append_left(queue, process);
         };
     }

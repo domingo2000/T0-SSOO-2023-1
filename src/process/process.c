@@ -1,11 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <unistd.h>
-
 #include "process.h"
-#include <stdbool.h>
 
 Process *process_init(
 	int _id,

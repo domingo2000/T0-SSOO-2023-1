@@ -1,5 +1,11 @@
 #pragma once
 #include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <signal.h>
+#include <unistd.h>
+
 #include "../time/_time.h"
 
 enum state
