@@ -7,6 +7,7 @@ Process *process_init(
 	int start_time,
 	int cpu_burst,
 	int io_wait,
+	char *path,
 	int n_args,
 	char **args)
 {
@@ -17,11 +18,12 @@ Process *process_init(
 	process->state = state;
 	process->created = false;
 	process->start_time = start_time;
-	process->wait_time = -1;
 	process->cpu_burst = cpu_burst;
 	process->io_wait = io_wait;
+	process->path = path;
 	process->n_args = n_args;
 	process->args = args;
+	process->stat_times_cpu = 0;
 	return process;
 }
 
@@ -65,17 +67,51 @@ void process_print(Process *process)
 		   process->io_wait);
 }
 
+void process_print_stats(Process *process)
+{
+	printf("------------\n\
+NAME: %s\n\
+PID: %d\n\
+TIMES_CPU: %d\n\
+TURNAROUND_TIME:-\n\
+RESPONSE_TIME:-\n\
+WAITING_TIME:%lf\n\
+EXIT_CODE:%d\n\
+",
+		   process->name,
+		   process->pid,
+		   process->stat_times_cpu,
+		   process->stat_total_wait_time,
+		   process->stat_exit_status);
+}
+
+bool process_is_created(Process *process)
+{
+	if (process->pid == -1)
+	{
+		return false;
+	}
+	return true;
+}
+
 void process_set_state(Process *process, enum state state)
 {
 	switch (state)
 	{
 	case waiting:
-		process->wait_time = 0;
+		process->wait_start_time = get_timestamp();
 		kill(process->pid, SIGSTOP);
 		break;
+	case ready:
+		process->stat_total_wait_time += process_get_delta_wait_time(process);
+		break;
 	case running:
-		process->wait_time = 0;
-		if (!process->created)
+		process->stat_times_cpu += 1;
+		if (process_is_created(process))
+		{
+			kill(process->pid, SIGCONT);
+		}
+		else
 		{
 			printf("FORKING | %s | parent pid: %d\n", process->name, getpid());
 			int pid = fork();
@@ -87,15 +123,10 @@ void process_set_state(Process *process, enum state state)
 			}
 			else
 			{
-				sleep(10);
+				execv(process->path, process->args);
 				exit(0);
 			}
 		}
-		else
-		{
-			kill(process->pid, SIGCONT);
-		}
-		process->wait_time = 0;
 		break;
 	default:
 		break;
@@ -104,7 +135,7 @@ void process_set_state(Process *process, enum state state)
 	process->state = state;
 }
 
-double process_get_wait_time(Process *process)
+double process_get_delta_wait_time(Process *process)
 {
-	return get_time_interval(get_timestamp(), process->wait_time);
+	return get_time_interval(get_timestamp(), process->wait_start_time);
 }

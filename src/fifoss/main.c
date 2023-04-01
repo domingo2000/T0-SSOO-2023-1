@@ -49,7 +49,7 @@ Process **load_processes(InputFile *input_file, int n_processes)
 		int start_time = atoi(input_file->lines[i][1]);
 		int cpu_burst = atoi(input_file->lines[i][2]);
 		int io_wait = atoi(input_file->lines[i][3]);
-		// int path = atoi(input_file->lines[i][4]);
+		char *path = input_file->lines[i][4];
 		int n_args = atoi(input_file->lines[i][5]);
 		char *args[n_args];
 
@@ -58,7 +58,7 @@ Process **load_processes(InputFile *input_file, int n_processes)
 			args[j] = input_file->lines[i][j + 6];
 		}
 
-		Process *process = process_init(i, name, state, start_time, cpu_burst, io_wait, n_args, args);
+		Process *process = process_init(i, name, state, start_time, cpu_burst, io_wait, path, n_args, args);
 		processes[i] = process;
 	}
 
@@ -100,9 +100,10 @@ int main(int argc, char const *argv[])
 		check_ready_processes(queue);
 	}
 
-	// Print all the processes in the array
+	// Print stats and destroy the process instances
 	for (int i = 0; i < input_file->len; i++)
 	{
+		process_print_stats(processes[i]);
 		process_destroy(processes[i]);
 	}
 	queue_destroy(queue);
@@ -115,9 +116,9 @@ int main(int argc, char const *argv[])
 int main2()
 {
 	char *args[2] = {"1", "2"};
-	Process *process0 = process_init(0, "P0", waiting, 0, 10, 10, 1, args);
-	Process *process1 = process_init(1, "P1", ready, 0, 10, 10, 1, args);
-	Process *process2 = process_init(2, "P2", waiting, 0, 10, 10, 1, args);
+	Process *process0 = process_init(0, "P0", waiting, 0, 10, 10, "/bin/echo", 1, args);
+	Process *process1 = process_init(1, "P1", ready, 0, 10, 10, "/bin/echo", 1, args);
+	Process *process2 = process_init(2, "P2", waiting, 0, 10, 10, "/bin/echo", 1, args);
 
 	Queue *queue = queue_init();
 	queue_append_right(queue, process0);

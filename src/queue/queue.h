@@ -23,7 +23,6 @@ typedef struct queue
     Process *running_process;
     int running_pid;
     double current_start_time;
-    double current_running_time;
     int size;
     Node *head;
     Node *tail;

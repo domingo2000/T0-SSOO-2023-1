@@ -140,11 +140,13 @@ Process *queue_pop_ready(Queue *queue)
 
     int count = 0;
     Process *process;
+    Process *ready_process = NULL;
     while (count < queue->size)
     {
         process = queue_pop_right(queue);
         if (process->state == ready)
         {
+            ready_process = process;
             break;
         }
         else
@@ -162,7 +164,7 @@ Process *queue_pop_ready(Queue *queue)
         count -= 1;
     }
 
-    return process;
+    return ready_process;
 }
 
 /**
@@ -204,9 +206,9 @@ int queue_get_current_running_time(Queue *queue)
 Process *queue_cpu_run(Queue *queue, Process *process)
 {
     printf("LOADING TO CPU | %s\n", process->name);
-    process_set_state(process, running);
     queue->running_process = process;
     queue->current_start_time = get_timestamp();
+    process_set_state(process, running);
     return process;
 }
 
@@ -239,7 +241,8 @@ void check_running_process(Queue *queue)
         if (child_pid == queue->running_process->pid)
         {
             process_set_state(queue->running_process, finished);
-            printf("CHILD EXITED | %s, pid=%d\n", queue->running_process->name, queue->running_process->pid);
+            queue->running_process->stat_exit_status = WEXITSTATUS(wstatus);
+            printf("CHILD EXITED | %s, pid=%d| STATUS=%d\n", queue->running_process->name, queue->running_process->pid, WEXITSTATUS(wstatus));
         }
 
         // If the process is running more time than necesary we send it to wait
@@ -260,7 +263,7 @@ void check_waiting_processes(Queue *queue)
     {
         Process *process = node->data;
 
-        if (process->state == waiting && process_get_wait_time(process) >= process->io_wait)
+        if (process->state == waiting && process_get_delta_wait_time(process) >= process->io_wait)
         {
             process_set_state(process, ready);
         }
