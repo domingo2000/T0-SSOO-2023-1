@@ -94,7 +94,7 @@ void process_set_state(Process *process, enum state state)
 			}
 			else
 			{
-				sleep(5);
+				sleep(10);
 				exit(0);
 			}
 		}

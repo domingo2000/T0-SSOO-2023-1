@@ -234,15 +234,17 @@ void check_running_process(Queue *queue)
     {
         // If the process send us the exit signal we listen that
         int child_pid = waitpid(queue->running_process->pid, &wstatus, WNOHANG);
-        if (child_pid)
+        if (child_pid == queue->running_process->pid)
         {
-            printf("CHILD EXITED | pid=%d\n", child_pid);
+            process_set_state(queue->running_process, finished);
+            printf("CHILD EXITED | %s, pid=%d\n", queue->running_process->name, queue->running_process->pid);
         }
 
         // If the process is running more time than necesary we send it to wait
         if (queue_get_current_running_time(queue) >= queue->running_process->cpu_burst)
         {
             queue_send_process_to_wait(queue, queue->running_process);
+            queue_append_left(queue, queue->running_process);
             queue->running_process = NULL;
         }
     }
