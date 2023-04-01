@@ -76,7 +76,7 @@ NAME: %s\n\
 PID: %d\n\
 TIMES_CPU: %d\n\
 TURNAROUND_TIME:%lf\n\
-RESPONSE_TIME:-\n\
+RESPONSE_TIME:%lf\n\
 WAITING_TIME:%lf\n\
 EXIT_CODE:%d\n\
 ",
@@ -84,6 +84,7 @@ EXIT_CODE:%d\n\
 		   process->pid,
 		   process->stat_times_cpu,
 		   process_get_turnaround_time(process),
+		   process_get_response_time(process),
 		   process->stat_total_wait_time + process->stat_total_ready_time,
 		   process->stat_exit_status);
 }
@@ -138,6 +139,7 @@ void process_set_state(Process *process, enum state state)
 		else
 		{
 			printf("FORKING | %s | parent pid: %d\n", process->name, getpid());
+			process->attention_time = get_timestamp();
 			int pid = fork();
 			process->pid = pid;
 			if (pid != 0)
@@ -175,4 +177,9 @@ double process_get_delta_ready_time(Process *process)
 double process_get_turnaround_time(Process *process)
 {
 	return get_time_interval(process->finish_time, process->start_time);
+}
+
+double process_get_response_time(Process *process)
+{
+	return get_time_interval(process->attention_time, process->start_time);
 }

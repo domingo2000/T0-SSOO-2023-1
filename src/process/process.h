@@ -37,6 +37,7 @@ typedef struct Process
 	double ready_initial_time;
 	double finish_time;
 	double enter_time;
+	double attention_time;
 } Process;
 
 Process *process_init(
@@ -63,3 +64,5 @@ double process_get_delta_wait_time(Process *process);
 double process_get_delta_ready_time(Process *process);
 
 double process_get_turnaround_time(Process *process);
+
+double process_get_response_time(Process *process);
