@@ -51,12 +51,14 @@ Process **load_processes(InputFile *input_file, int n_processes)
 		int io_wait = atoi(input_file->lines[i][3]);
 		char *path = input_file->lines[i][4];
 		int n_args = atoi(input_file->lines[i][5]);
-		char *args[n_args];
+		char **args = malloc(sizeof(char *) * (n_args + 2));
 
+		args[0] = path; // Name of the file is added to arg[0] by convention
 		for (int j = 0; j < n_args; j++)
 		{
-			args[j] = input_file->lines[i][j + 6];
+			args[j + 1] = input_file->lines[i][j + 6];
 		}
+		args[n_args + 2 - 1] = (char *)NULL; // Null pointer added as final arg to comply execv function
 
 		Process *process = process_init(i, name, state, start_time, cpu_burst, io_wait, path, n_args, args);
 		processes[i] = process;
@@ -79,19 +81,26 @@ int main(int argc, char const *argv[])
 	int n_processes = input_file->len;
 	Process **processes = load_processes(input_file, n_processes);
 	// // Sort all based on start time
-	qsort(processes, n_processes, sizeof(Process *), cmpfunc);
+	// qsort(processes, n_processes, sizeof(Process *), cmpfunc);
 
-	// Print all the processes in the array
+	// Print all the processes in the array and get the last that is going to run
+	int max_start_process_time = -1;
+	Process *last_process;
 	for (int i = 0; i < input_file->len; i++)
 	{
-		process_print(processes[i]);
+		Process *process = processes[i];
+		process_print(process);
+		if (process->start_time > max_start_process_time)
+		{
+			last_process = process;
+			max_start_process_time = process->start_time;
+		}
 	}
 
 	double time_start = get_timestamp();
 
 	Queue *queue = queue_init();
 
-	Process *last_process = processes[n_processes - 1];
 	while (last_process->state != finished)
 	{
 		check_enter_processes(queue, time_start, processes, n_processes);

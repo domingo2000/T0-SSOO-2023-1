@@ -24,11 +24,13 @@ Process *process_init(
 	process->n_args = n_args;
 	process->args = args;
 	process->stat_times_cpu = 0;
+	process->stat_total_wait_time = 0;
 	return process;
 }
 
 void process_destroy(Process *process)
 {
+	free(process->args);
 	free(process);
 }
 
@@ -124,7 +126,6 @@ void process_set_state(Process *process, enum state state)
 			else
 			{
 				execv(process->path, process->args);
-				exit(0);
 			}
 		}
 		break;
