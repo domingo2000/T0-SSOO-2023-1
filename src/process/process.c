@@ -16,7 +16,6 @@ Process *process_init(
 	process->name = name;
 	process->pid = -1;
 	process->state = state;
-	process->created = false;
 	process->start_time = start_time;
 	process->cpu_burst = cpu_burst;
 	process->io_wait = io_wait;
@@ -25,6 +24,7 @@ Process *process_init(
 	process->args = args;
 	process->stat_times_cpu = 0;
 	process->stat_total_wait_time = 0;
+	process->stat_total_ready_time = 0;
 	return process;
 }
 
@@ -75,7 +75,7 @@ void process_print_stats(Process *process)
 NAME: %s\n\
 PID: %d\n\
 TIMES_CPU: %d\n\
-TURNAROUND_TIME:-\n\
+TURNAROUND_TIME:%lf\n\
 RESPONSE_TIME:-\n\
 WAITING_TIME:%lf\n\
 EXIT_CODE:%d\n\
@@ -83,7 +83,8 @@ EXIT_CODE:%d\n\
 		   process->name,
 		   process->pid,
 		   process->stat_times_cpu,
-		   process->stat_total_wait_time,
+		   process_get_turnaround_time(process),
+		   process->stat_total_wait_time + process->stat_total_ready_time,
 		   process->stat_exit_status);
 }
 
@@ -98,14 +99,35 @@ bool process_is_created(Process *process)
 
 void process_set_state(Process *process, enum state state)
 {
+
+	if (process->state == state)
+	{
+		return;
+	}
+
+	// Update the times of the state that is beign replaced
+	switch (process->state)
+	{
+	case ready:
+		process->stat_total_ready_time += process_get_delta_ready_time(process);
+		break;
+	case waiting:
+		process->stat_total_wait_time += process_get_delta_wait_time(process);
+		break;
+	case finished:
+		break;
+	default:
+		break;
+	}
+
 	switch (state)
 	{
 	case waiting:
-		process->wait_start_time = get_timestamp();
+		process->wait_initial_time = get_timestamp();
 		kill(process->pid, SIGSTOP);
 		break;
 	case ready:
-		process->stat_total_wait_time += process_get_delta_wait_time(process);
+		process->ready_initial_time = get_timestamp();
 		break;
 	case running:
 		process->stat_times_cpu += 1;
@@ -121,13 +143,15 @@ void process_set_state(Process *process, enum state state)
 			if (pid != 0)
 			{
 				process->pid = pid;
-				process->created = true;
 			}
 			else
 			{
 				execv(process->path, process->args);
 			}
 		}
+		break;
+	case finished:
+		process->finish_time = get_timestamp();
 		break;
 	default:
 		break;
@@ -138,5 +162,17 @@ void process_set_state(Process *process, enum state state)
 
 double process_get_delta_wait_time(Process *process)
 {
-	return get_time_interval(get_timestamp(), process->wait_start_time);
+	double time = get_time_interval(get_timestamp(), process->wait_initial_time);
+	return time;
+}
+
+double process_get_delta_ready_time(Process *process)
+{
+	double time = get_time_interval(get_timestamp(), process->ready_initial_time);
+	return time;
+}
+
+double process_get_turnaround_time(Process *process)
+{
+	return get_time_interval(process->finish_time, process->start_time);
 }

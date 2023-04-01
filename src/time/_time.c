@@ -7,7 +7,7 @@ double get_timestamp()
 
 double get_time_interval(double timestamp1, double timestamp2)
 {
-    return fabs(round((timestamp2 - timestamp1)));
+    return fabs(timestamp2 - timestamp1);
 }
 
 int round_time(double time)

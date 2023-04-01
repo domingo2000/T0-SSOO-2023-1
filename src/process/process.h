@@ -31,9 +31,12 @@ typedef struct Process
 	char **args;
 	int stat_times_cpu;
 	double stat_total_wait_time;
+	double stat_total_ready_time;
 	int stat_exit_status;
-	bool created;
-	double wait_start_time;
+	double wait_initial_time;
+	double ready_initial_time;
+	double finish_time;
+	double enter_time;
 } Process;
 
 Process *process_init(
@@ -56,3 +59,7 @@ void process_print_stats(Process *process);
 void process_set_state(Process *process, enum state state);
 
 double process_get_delta_wait_time(Process *process);
+
+double process_get_delta_ready_time(Process *process);
+
+double process_get_turnaround_time(Process *process);

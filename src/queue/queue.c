@@ -243,6 +243,8 @@ void check_running_process(Queue *queue)
             process_set_state(queue->running_process, finished);
             queue->running_process->stat_exit_status = WEXITSTATUS(wstatus);
             printf("CHILD EXITED | %s, pid=%d| STATUS=%d\n", queue->running_process->name, queue->running_process->pid, WEXITSTATUS(wstatus));
+            queue->running_process = NULL;
+            return;
         }
 
         // If the process is running more time than necesary we send it to wait
@@ -251,6 +253,7 @@ void check_running_process(Queue *queue)
             queue_send_process_to_wait(queue, queue->running_process);
             queue_append_left(queue, queue->running_process);
             queue->running_process = NULL;
+            return;
         }
     }
 }
@@ -280,6 +283,7 @@ void check_enter_processes(Queue *queue, int time_start, Process **processes, in
         if (current_time == process->start_time && process->state == none)
         {
             printf("STARTING | %s | time: %d\n", process->name, current_time);
+            process->enter_time = get_timestamp();
             process_set_state(process, ready);
             queue_append_left(queue, process);
         };
