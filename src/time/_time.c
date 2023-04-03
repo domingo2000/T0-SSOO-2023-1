@@ -2,15 +2,10 @@
 
 double get_timestamp()
 {
-    return clock();
+    return (double)clock() / (double)CLOCKS_PER_SEC;
 }
 
 double get_time_interval(double timestamp1, double timestamp2)
 {
-    return fabs((double)(timestamp2 - timestamp1) / CLOCKS_PER_SEC);
-}
-
-int round_time(double time)
-{
-    return (int)(time);
+    return fabs(timestamp2 - timestamp1);
 }

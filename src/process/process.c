@@ -76,21 +76,13 @@ void process_print(Process *process)
 
 void process_print_stats(Process *process)
 {
-	printf("------------\n\
-NAME: %s\n\
-PID: %d\n\
-TIMES_CPU: %d\n\
-TURNAROUND_TIME:%d\n\
-RESPONSE_TIME:%d\n\
-WAITING_TIME:%d\n\
-EXIT_CODE:%d\n\
-",
+	printf("%s,%d,%d,%d,%d,%d,%d\n",
 		   process->name,
 		   process->pid,
 		   process->stat_times_cpu,
-		   round_time(process_get_turnaround_time(process)),
-		   round_time(process_get_response_time(process)),
-		   round_time(process->stat_total_wait_time + process->stat_total_ready_time),
+		   (int)(process_get_turnaround_time(process)),
+		   (int)(process_get_response_time(process)),
+		   (int)(process->stat_total_wait_time + process->stat_total_ready_time),
 		   process->stat_exit_status);
 }
 

@@ -37,6 +37,21 @@ int cmpfunc(const void *a, const void *b)
 	}
 }
 
+bool are_all_processes_finished(Process **processes, int n_processes)
+{
+	Process *process;
+	for (int i = 0; i < n_processes; i++)
+	{
+		process = processes[i];
+		if (process->state != finished)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 Process **load_processes(InputFile *input_file, int n_processes)
 {
 	Process **processes = malloc(sizeof(Process *) * n_processes);
@@ -83,25 +98,25 @@ int main(int argc, char const *argv[])
 	// // Sort all based on start time
 	// qsort(processes, n_processes, sizeof(Process *), cmpfunc);
 
-	// Print all the processes in the array and get the last that is going to run
-	int max_start_process_time = -1;
-	Process *last_process;
-	for (int i = 0; i < input_file->len; i++)
-	{
-		Process *process = processes[i];
-		process_print(process);
-		if (process->start_time > max_start_process_time)
-		{
-			last_process = process;
-			max_start_process_time = process->start_time;
-		}
-	}
+	// // Print all the processes in the array and get the last that is going to run
+	// int max_start_process_time = -1;
+	// Process *last_process;
+	// for (int i = 0; i < input_file->len; i++)
+	// {
+	// 	Process *process = processes[i];
+	// 	process_print(process);
+	// 	if (process->start_time > max_start_process_time)
+	// 	{
+	// 		last_process = process;
+	// 		max_start_process_time = process->start_time;
+	// 	}
+	// }
 
 	double time_start = get_timestamp();
 
 	Queue *queue = queue_init();
 
-	while (last_process->state != finished)
+	while (!are_all_processes_finished(processes, n_processes))
 	{
 		check_enter_processes(queue, time_start, processes, n_processes);
 		check_waiting_processes(queue);

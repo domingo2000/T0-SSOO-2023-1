@@ -295,13 +295,13 @@ void check_waiting_processes(Queue *queue)
 
 void check_enter_processes(Queue *queue, int time_start, Process **processes, int n_processes)
 {
-    int current_time = round_time(get_time_interval(time_start, get_timestamp()));
+    double current_time = get_time_interval(time_start, get_timestamp());
     for (int i = 0; i < n_processes; i++)
     {
         Process *process = processes[i];
-        if (current_time == process->start_time && process->state == none)
+        if (current_time >= process->start_time && process->state == none)
         {
-            printf("STARTING | %s | time: %d\n", process->name, current_time);
+            printf("STARTING | %s | time: %lf\n", process->name, current_time);
             process->enter_time = get_timestamp();
             process_set_state(process, ready);
             queue_append_left(queue, process);
