@@ -80,9 +80,9 @@ void process_print_stats(Process *process)
 		   process->name,
 		   process->pid,
 		   process->stat_times_cpu,
-		   (int)(process_get_turnaround_time(process)),
-		   (int)(process_get_response_time(process)),
-		   (int)(process->stat_total_wait_time + process->stat_total_ready_time),
+		   (int)round(process_get_turnaround_time(process)),
+		   (int)round(process_get_response_time(process)),
+		   (int)round(process->stat_total_wait_time + process->stat_total_ready_time),
 		   process->stat_exit_status);
 }
 
