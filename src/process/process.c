@@ -36,6 +36,11 @@ void process_destroy(Process *process)
 
 void process_print(Process *process)
 {
+	if (!process)
+	{
+		printf("NULL\n");
+		return;
+	}
 	char state;
 	switch (process->state)
 	{
@@ -75,17 +80,17 @@ void process_print_stats(Process *process)
 NAME: %s\n\
 PID: %d\n\
 TIMES_CPU: %d\n\
-TURNAROUND_TIME:%lf\n\
-RESPONSE_TIME:%lf\n\
-WAITING_TIME:%lf\n\
+TURNAROUND_TIME:%d\n\
+RESPONSE_TIME:%d\n\
+WAITING_TIME:%d\n\
 EXIT_CODE:%d\n\
 ",
 		   process->name,
 		   process->pid,
 		   process->stat_times_cpu,
-		   process_get_turnaround_time(process),
-		   process_get_response_time(process),
-		   process->stat_total_wait_time + process->stat_total_ready_time,
+		   round_time(process_get_turnaround_time(process)),
+		   round_time(process_get_response_time(process)),
+		   round_time(process->stat_total_wait_time + process->stat_total_ready_time),
 		   process->stat_exit_status);
 }
 
@@ -176,10 +181,10 @@ double process_get_delta_ready_time(Process *process)
 
 double process_get_turnaround_time(Process *process)
 {
-	return get_time_interval(process->finish_time, process->start_time);
+	return get_time_interval(process->finish_time, process->enter_time);
 }
 
 double process_get_response_time(Process *process)
 {
-	return get_time_interval(process->attention_time, process->start_time);
+	return get_time_interval(process->attention_time, process->enter_time);
 }

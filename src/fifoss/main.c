@@ -124,25 +124,25 @@ int main(int argc, char const *argv[])
 
 int main2()
 {
-	char *args[2] = {"1", "2"};
-	Process *process0 = process_init(0, "P0", waiting, 0, 10, 10, "/bin/echo", 1, args);
-	Process *process1 = process_init(1, "P1", ready, 0, 10, 10, "/bin/echo", 1, args);
-	Process *process2 = process_init(2, "P2", waiting, 0, 10, 10, "/bin/echo", 1, args);
+	char **args0 = malloc(sizeof(char *) * 2);
+	args0[0] = "1";
+	args0[1] = "2";
+
+	char **args1 = malloc(sizeof(char *) * 2);
+	args1[0] = "1";
+	args1[1] = "2";
+	Process *process0 = process_init(0, "P0", waiting, 0, 10, 10, "/bin/echo", 1, args0);
+	Process *process1 = process_init(1, "P1", ready, 0, 10, 10, "/bin/echo", 1, args1);
 
 	Queue *queue = queue_init();
-	queue_append_right(queue, process0);
-	queue_append_right(queue, process1);
-	queue_append_right(queue, process2);
+	queue_append_left(queue, process0);
+	queue_append_left(queue, process1);
 
+	queue_print(queue);
 	process_print(queue_pop_ready(queue));
-	// process_print(queue_pop_left(queue));
-	// process_print(queue_pop_right(queue));
-	// process_print(queue_pop_right(queue));
 
 	process_destroy(process0);
 	process_destroy(process1);
-	process_destroy(process2);
-	queue_destroy(queue);
 
 	return 0;
 }

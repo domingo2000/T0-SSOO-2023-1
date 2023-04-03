@@ -38,6 +38,23 @@ void queue_destroy(Queue *queue)
     free(queue);
 }
 
+void queue_print(Queue *queue)
+{
+    if (queue->size == 0)
+    {
+        printf("[]\n");
+        return;
+    }
+
+    printf("[");
+    Node *node = queue->tail;
+    for (int i = 0; i < queue->size; i++)
+    {
+        printf("%s:%d,", node->data->name, node->data->state);
+        node = node->next;
+    }
+    printf("]\n");
+}
 void queue_append_left(Queue *queue, Process *process)
 {
     Node *node = _node_init(process);
@@ -141,7 +158,9 @@ Process *queue_pop_ready(Queue *queue)
     int count = 0;
     Process *process;
     Process *ready_process = NULL;
-    while (count < queue->size)
+
+    int queue_size = queue->size;
+    while (count < queue_size)
     {
         process = queue_pop_right(queue);
         if (process->state == ready)
@@ -153,8 +172,8 @@ Process *queue_pop_ready(Queue *queue)
         {
             // Temporaly store popped process not ready
             popped_processes[count] = process;
+            count += 1;
         }
-        count += 1;
     }
 
     // We return to the queue all the process popped that where not ready back

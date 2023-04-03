@@ -34,7 +34,7 @@ void _node_destroy(Node *node);
 
 Queue *queue_init();
 void queue_destroy(Queue *queue);
-// void queue_print(Queue *queue);
+void queue_print(Queue *queue);
 void queue_append_left(Queue *queue, Process *process);
 void queue_append_right(Queue *queue, Process *process);
 Process *queue_pop_left(Queue *queue);
