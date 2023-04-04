@@ -55,7 +55,7 @@ void process_destroy(Process *process);
 
 void process_print(Process *process);
 
-void process_print_stats(Process *process);
+void process_print_stats(Process *process, FILE *output_file);
 
 void process_set_state(Process *process, enum state state);
 

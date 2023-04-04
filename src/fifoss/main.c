@@ -87,6 +87,7 @@ int main(int argc, char const *argv[])
 	/*Lectura del input*/
 	char *file_name = (char *)argv[1];
 	InputFile *input_file = read_file(file_name);
+	FILE *output_file = fopen(argv[2], "w");
 
 	/*Mostramos el archivo de input en consola*/
 	printf("Nombre archivo: %s\n", file_name);
@@ -127,10 +128,11 @@ int main(int argc, char const *argv[])
 	// Print stats and destroy the process instances
 	for (int i = 0; i < input_file->len; i++)
 	{
-		process_print_stats(processes[i]);
+		process_print_stats(processes[i], output_file);
 		process_destroy(processes[i]);
 	}
 	queue_destroy(queue);
+	fclose(output_file);
 	free(processes);
 	input_file_destroy(input_file);
 

@@ -74,9 +74,9 @@ void process_print(Process *process)
 		   process->io_wait);
 }
 
-void process_print_stats(Process *process)
+void process_print_stats(Process *process, FILE *output_file)
 {
-	printf("%s,%d,%d,%d,%d,%d,%d\n",
+	fprintf(output_file, "%s,%d,%d,%d,%d,%d,%d\n",
 		   process->name,
 		   process->pid,
 		   process->stat_times_cpu,
