@@ -224,7 +224,7 @@ int queue_get_current_running_time(Queue *queue)
 
 Process *queue_cpu_run(Queue *queue, Process *process)
 {
-    printf("LOADING TO CPU | %s\n", process->name);
+    // printf("LOADING TO CPU | %s\n", process->name);
     queue->running_process = process;
     queue->current_start_time = get_timestamp();
     process_set_state(process, running);
@@ -233,7 +233,7 @@ Process *queue_cpu_run(Queue *queue, Process *process)
 
 void queue_send_process_to_wait(Queue *queue, Process *process)
 {
-    printf("STOPPING | %s \n", process->name);
+    // printf("STOPPING | %s \n", process->name);
 
     process_set_state(process, waiting);
 }
@@ -261,7 +261,7 @@ void check_running_process(Queue *queue)
         {
             process_set_state(queue->running_process, finished);
             queue->running_process->stat_exit_status = WEXITSTATUS(wstatus);
-            printf("CHILD EXITED | %s, pid=%d| STATUS=%d\n", queue->running_process->name, queue->running_process->pid, WEXITSTATUS(wstatus));
+            // printf("CHILD EXITED | %s, pid=%d| STATUS=%d\n", queue->running_process->name, queue->running_process->pid, WEXITSTATUS(wstatus));
             queue->running_process = NULL;
             return;
         }
@@ -301,7 +301,7 @@ void check_enter_processes(Queue *queue, int time_start, Process **processes, in
         Process *process = processes[i];
         if (current_time >= process->start_time && process->state == none)
         {
-            printf("STARTING | %s | time: %lf\n", process->name, current_time);
+            // printf("STARTING | %s | time: %lf\n", process->name, current_time);
             process->enter_time = get_timestamp();
             process_set_state(process, ready);
             queue_append_left(queue, process);

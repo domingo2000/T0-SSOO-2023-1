@@ -77,13 +77,13 @@ void process_print(Process *process)
 void process_print_stats(Process *process, FILE *output_file)
 {
 	fprintf(output_file, "%s,%d,%d,%d,%d,%d,%d\n",
-		   process->name,
-		   process->pid,
-		   process->stat_times_cpu,
-		   (int)round(process_get_turnaround_time(process)),
-		   (int)round(process_get_response_time(process)),
-		   (int)round(process->stat_total_wait_time + process->stat_total_ready_time),
-		   process->stat_exit_status);
+			process->name,
+			process->pid,
+			process->stat_times_cpu,
+			(int)round(process_get_turnaround_time(process)),
+			(int)round(process_get_response_time(process)),
+			(int)round(process->stat_total_wait_time + process->stat_total_ready_time),
+			process->stat_exit_status);
 }
 
 bool process_is_created(Process *process)
@@ -135,7 +135,7 @@ void process_set_state(Process *process, enum state state)
 		}
 		else
 		{
-			printf("FORKING | %s | parent pid: %d\n", process->name, getpid());
+			// printf("FORKING | %s | parent pid: %d\n", process->name, getpid());
 			process->attention_time = get_timestamp();
 			int pid = fork();
 			process->pid = pid;

@@ -92,7 +92,7 @@ int main(int argc, char const *argv[])
 	/*Mostramos el archivo de input en consola*/
 	printf("Nombre archivo: %s\n", file_name);
 	printf("Cantidad de procesos: %d\n", input_file->len);
-	printf("Procesos:\n");
+	// printf("Procesos:\n");
 
 	int n_processes = input_file->len;
 	Process **processes = load_processes(input_file, n_processes);
