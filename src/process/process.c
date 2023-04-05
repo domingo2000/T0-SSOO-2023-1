@@ -138,7 +138,6 @@ void process_set_state(Process *process, enum state state)
 			// printf("FORKING | %s | parent pid: %d\n", process->name, getpid());
 			process->attention_time = get_timestamp();
 			int pid = fork();
-			process->pid = pid;
 			if (pid != 0)
 			{
 				process->pid = pid;

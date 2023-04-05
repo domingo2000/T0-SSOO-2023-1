@@ -224,7 +224,7 @@ int queue_get_current_running_time(Queue *queue)
 
 Process *queue_cpu_run(Queue *queue, Process *process)
 {
-    // printf("LOADING TO CPU | %s\n", process->name);
+    // printf("LOADING TO CPU | %s:%d\n", process->name, process->pid);
     queue->running_process = process;
     queue->current_start_time = get_timestamp();
     process_set_state(process, running);
